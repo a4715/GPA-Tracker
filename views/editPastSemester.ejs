@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <title>GPA Tracker</title>
+    </head>
+    
+    
+    <body style="background-color: #ede7f6">
+        
+        <nav class="navbar navbar-expand-sm" style="background-color: #3f51b5;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/" style="color:white"><b>GPA Tracker</b></a>
+        </div>
+        </nav> <br>
+
+
+        <div class="container">
+            <br> 
+            <div>
+                <form action="/addPastSemester" method="POST">
+                    
+                    <div class="row g-4">
+                    <div class="col-auto text-center">
+                    <label for="semester" >Semester Name:</label>
+                    </div>
+
+                    <div class="col-auto">
+                    <select  id="semester" name="semester" required>
+                    <option>Y1S1</option>
+                    <option>Y1S2</option>
+                    <option>Y2S1</option>
+                    <option>Y2S2</option>
+                    <option>Y3S1</option>
+                    <option>Y3S2</option>
+                    </select>
+                    </div>
+                    </div>
+                
+                    <br>
+                    <button class="btn" type="button" id="add-module-btn" style="background-color: #3f51b5; color:white">Add Module +</button>
+                    <br><br><br>
+                    
+                   
+                    <div id="module-container"> <!-- Module container -->
+                    <div class="module-group row g-4">   <!-- Module group -->
+                    <div class="col-auto text-center">
+                    <label for="module">Module Name</label><br><br>
+                    <input type="text" name="module[]" required><br><br>
+                    </div>
+
+                    <div class="col-auto text-center">
+                    <label for="code">Module Code</label><br><br>
+                    <input type="text" name="code[]" required><br><br>
+                    </div>
+
+                    <div class="col-auto text-center">
+                    <label for="grade">Final Grade</label><br><br>
+                    <select name="grade[]" required>
+                    <option>A</option>
+                    <option>B+</option>
+                    <option>B</option>
+                    <option>C+</option>
+                    <option>C</option>
+                    <option>D+</option>
+                    <option>D</option>
+                    <option>F</option>
+                    <option>Pass</option>
+                    </select>
+                    </div>
+
+                    <div class="col-auto text-center">
+                    <label for="credits">Module Credits</label><br><br>
+                    <input type="number" class="text-center" name="credits[]" min="1" max="6" step="1" required><br><br>
+                    </div>
+
+                    <div class="col-auto">
+                    <button class="btn btn-sm delete-module-btn" type="button" style="background-color: #3f51b5; color:white;">Delete</button>
+                    </div>
+
+                    </div>
+                    </div>
+                    
+                    <br><br>
+                    <button class="btn" type="submit" style="background-color: #3f51b5; color:white">Save</button>
+                </form>
+            </div>
+        </div>
+        
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const addButton = document.getElementById('add-module-btn');
+    const container = document.getElementById('module-container');
+
+    // Function to bind delete button event
+    function bindDeleteButtons() {
+        const deleteButtons = container.querySelectorAll('.btn[type="button"]');
+
+        deleteButtons.forEach(button => {
+            button.removeEventListener('click', deleteHandler); // prevent duplicates
+            button.addEventListener('click', deleteHandler);
+        });
+    }
+
+    // Delete handler function
+    function deleteHandler(event) {
+        const allGroups = container.querySelectorAll('.module-group');
+        if (allGroups.length <= 1) {
+            alert("At least one module is required.");
+            return;
+        }
+
+        const moduleGroup = event.target.closest('.module-group');
+        if (moduleGroup) {
+            container.removeChild(moduleGroup);
+        }
+    }
+
+    // Add module button logic
+    addButton.addEventListener('click', () => {
+        const moduleGroups = container.querySelectorAll('.module-group');
+        const lastGroup = moduleGroups[moduleGroups.length - 1];
+
+        // Validate last group before cloning
+        const inputs = lastGroup.querySelectorAll('input, select');
+        let filled = true;
+        inputs.forEach(input => {
+            if (input.value.trim() === '') filled = false;
+        });
+
+        if (!filled) {
+            alert('Please fill in all fields before adding another module.');
+            return;
+        }
+
+        const clone = lastGroup.cloneNode(true);
+        clone.querySelectorAll('input, select').forEach(input => input.value = '');
+        container.appendChild(clone);
+        bindDeleteButtons(); // rebind delete buttons
+    });
+
+    bindDeleteButtons(); // initial bind
+    });
+    </script>
+    </body>
+</html>
+
+
