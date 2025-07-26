@@ -8,125 +8,27 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <title>GPA Tracker</title>
-  <!-- <link rel="icon" type="image/x-icon" href="/uploads/favicon.png"> -->
-  <!-- <style>
-    .assignment-row {
-      transition: all 0.3s ease;
-      border-bottom: 1px solid #eee;
-      padding: 1rem 0;
-      align-items: center;
-    }
-    .assignment-row:hover {
-      background-color: #f9f9f9;
-    }
-    .header-row {
-      font-weight: bold;
-      border-bottom: 2px solid #dee2e6;
-      padding: 0.75rem 0;
-      margin-bottom: 0.5rem;
-      cursor: pointer;
-      background-color: #f3d8ff;
-      border-radius: 5px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-    }
-    .header-cell:hover {
-      background-color: #e6c6f5;
-    }
-    .countdown-cell {
-      min-width: 150px;
-      text-align: right;
-    }
-    .urgent {
-      color: #dc3545;
-      font-weight: bold;
-    }
-    .warning {
-      color: #ffc107;
-      font-weight: bold;
-    }
-    .sort-icon {
-      margin-left: 5px;
-    }
-    .custom-primary {
-      background-color: #41285a;
-      border-color: #41285a;
-    }
-    .custom-primary:hover {
-      background-color: #341c4a;
-      border-color: #341c4a;
-    }
-    .badge-custom {
-      background-color: #41285a;
-    }
-    .btn-group .btn {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-      margin: 0 2px;
-    }
-    .action-cell {
-      min-width: 180px;
-      text-align: right;
-    }
-    .alert-notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-      animation: fadeIn 0.3s, fadeOut 0.5s 2.5s forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-    .countdown-text {
-      font-family: monospace;
-      font-size: 0.9rem;
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-    .countdown-text.urgent {
-      background-color: #ffebee;
-      color: #d32f2f;
-      font-weight: bold;
-    }
-    .countdown-text.warning {
-      background-color: #fff8e1;
-      color: #ff8f00;
-      font-weight: bold;
-    }
-    .day-cell {
-      min-width: 60px;
-    }
-    .time-cell {
-      min-width: 80px;
-    }
-  </style> -->
 </head>
 <body>
   <nav class="navbar navbar-expand-sm navbar-light" style="background-color: #3F51B5;">
       <div class="container">
-          <a class="navbar-brand" href="#"><img src="/uploads/GPA Tracker.png" style="width: 200px"></a>
+          <a class="navbar-brand" href="#"><img src="/uploads/GPA Tracker 2.png" style="width: 200px"></a>
           </div>
      </nav>
 
   
-   <!-- GPA Summary Section -->
-   <div class="container-fluid mt-4 px-0">
-    <div class="card shadow-sm mb-4 rounded-0" style="background-color: #f8f9fa; border-left: 5px solid #3F51B5;">
+  
+  <!-- GPA Summary Section -->
+  <div class="container-fluid px-0">
+    <div class="card shadow-sm rounded-0" style="background-color: #8987bc; border-left: 5px solid #3F51B5;">
       <div class="card-body">
         <div class="row align-items-center">
           <!-- Current GPA -->
           <div class="col-md-6 text-center">
             <div class="d-flex flex-column align-items-center">
-              <h4 class="text-muted mb-3">Current GPA</h4>
-              <h2 class="display-4 mb-3">0.00</h2>
-              <a href="/addGPA" class="btn btn-primary" style="background-color: #3F51B5; border-color: #3F51B5;">
+              <h4 class="mb-3" style="color: #f0edff;">Current GPA</h4>
+              <h2 class="display-4 mb-3" style="color: #f0edff;">0.00</h2>
+              <a href="/addGPA" class="btn" style="background-color: #f0edff; border-color: #f0edff; color: #3F51B5;">
                 Add GPA
               </a>
             </div>
@@ -134,16 +36,16 @@
           
           <!-- Divider -->
           <div class="col-md-1 text-center">
-            <div style="border-left: 1px solid #dee2e6; height: 120px;"></div>
+            <div style="border-left: 1px solid #f0edff; height: 120px;"></div>
           </div>
           
           <!-- Projected GPA -->
           <div class="col-md-5 text-center">
             <div class="d-flex flex-column align-items-center">
-              <h4 class="text-muted mb-3">Projected GPA</h4>
-              <h2 class="display-4 mb-3">0.00</h2>
-              <small class="text-muted">
-                <span class="text-muted">No change</span>
+              <h4 class="mb-3" style="color: #f0edff;">Projected GPA</h4>
+              <h2 class="display-4 mb-3" style="color: #f0edff;">0.00</h2>
+              <small style="color: #f0edff;">
+                <span>No change</span>
                 from current
               </small>
             </div>
