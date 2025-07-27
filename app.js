@@ -9,10 +9,14 @@ const app = express();
 
 // Database connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'Mynameisjeff123!',
-    database: 'c237_usersdb'
+    // host: 'localhost',
+    // user: 'root',
+    // password: 'Mynameisjeff123!',
+    // database: 'c237_usersdb'
+    host: 'b-poe6.h.filess.io',
+    user: 'GPATracker_scienceegg',
+    password: '654f0adde2031c3b3a37a16b33f789327db4a9d0',
+    database: 'GPATracker_scienceegg'
 });
 
 db.connect((err) => {
