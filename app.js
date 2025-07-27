@@ -125,11 +125,12 @@ app.post('/login', async (req, res) => {
             email: users[0].email
         };
         
-        res.redirect('/');
+        return res.redirect('/'); // or your dashboard route
+        
     } catch (err) {
-        console.error(err);
+        console.error('Login error:', err);
         req.flash('error', 'Login failed');
-        res.redirect('/login');
+        return res.redirect('/login');
     }
 });
 
