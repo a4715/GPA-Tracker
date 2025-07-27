@@ -37,6 +37,12 @@ app.use(session({
 }));
 app.use(flash());
 
+app.use((req, res, next) => {
+    console.log('Session:', req.session);
+    next();
+});
+
+
 // Set view engine
 app.set('view engine', 'ejs');
 
@@ -209,6 +215,7 @@ async function testDbConnection() {
 }
 
 testDbConnection();
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
