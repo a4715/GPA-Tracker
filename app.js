@@ -157,17 +157,21 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         
         // Create user
-        await pool.query(
+        const [result] = await pool.query(
             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
             [username, email, hashedPassword]
         );
         
-        req.flash('success', 'Registration successful. Please login.');
-        res.redirect('/login');
+        if (result.affectedRows === 1) {
+            req.flash('success', 'Registration successful. Please login.');
+            return res.redirect('/login');
+        } else {
+            throw new Error('Registration failed');
+        }
     } catch (err) {
-        console.error(err);
+        console.error('Registration error:', err);
         req.flash('error', 'Registration failed');
-        res.redirect('/register');
+        return res.redirect('/register');
     }
 });
 
