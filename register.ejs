@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+
+    .navbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px;
+      background-color: #f0f0f0;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    form {
+      display: inline-block;
+      text-align: left;
+      margin-top: 50px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 300px;
+      padding: 10px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 25px;
+      border: 2px solid black;
+      background-color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: black;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    &lt; App Name / Logo &gt;
+  </div>
+
+  <h1>Register</h1>
+
+  <% if (error) { %>
+    <div class="error"><%= error %></div>
+  <% } %>
+
+  <form action="/register" method="POST">
+    <label>Username:</label>
+    <input type="text" name="username" required>
+
+    <label>Email:</label>
+    <input type="email" name="email" required>
+
+    <label>Password:</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Register</button>
+  </form>
+
+</body>
+</html>
