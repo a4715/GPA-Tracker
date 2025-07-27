@@ -50,6 +50,14 @@ const checkAuthenticated = (req, res, next) => {
 };
 
 // Routes
+
+app.get('/', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/dashboard'); // or your main app page
+    }
+    res.redirect('/welcome');
+});
+
 app.get('/', checkAuthenticated, async (req, res) => {
     try {
         // Get user's GPA data
