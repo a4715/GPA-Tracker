@@ -192,6 +192,24 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
+// Test database connection on startup
+async function testDbConnection() {
+    try {
+        const conn = await pool.getConnection();
+        console.log('Successfully connected to database');
+        conn.release();
+        
+        // Test query
+        const [rows] = await pool.query('SELECT * FROM users LIMIT 1');
+        console.log('Database test query successful');
+    } catch (err) {
+        console.error('Database connection failed:', err);
+        process.exit(1);
+    }
+}
+
+testDbConnection();
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
