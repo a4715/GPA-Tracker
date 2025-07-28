@@ -18,7 +18,9 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'GPATracker_scienceegg',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    connectTimeout: 10000, // 10 seconds timeout
+    acquireTimeout: 10000  // 10 seconds timeout
 });
 
 // Middleware
