@@ -64,40 +64,6 @@ app.get('/', (req, res) => {
     res.redirect('/welcome');
 });
 
-app.get('/', checkAuthenticated, async (req, res) => {
-    try {
-        // Get user's GPA data
-        const [user] = await pool.query(
-            'SELECT current_gpa, total_mc FROM users WHERE id = ?', 
-            [req.session.user.id]
-        );
-        
-        // Get current modules
-        const [modules] = await pool.query(
-            'SELECT * FROM modules WHERE user_id = ? AND semester = "current"',
-            [req.session.user.id]
-        );
-
-        // Get past semesters
-        const [pastSemesters] = await pool.query(
-            'SELECT DISTINCT semester FROM modules WHERE user_id = ? AND semester != "current"',
-            [req.session.user.id]
-        );
-
-        res.render('index', {
-            currentGPA: user[0]?.current_gpa || 0.00,
-            projectedGPA: 0.00, // You'll need to calculate this
-            modules: modules || [],
-            pastSemesters: pastSemesters || [],
-            user: req.session.user
-        });
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Error loading dashboard');
-        res.redirect('/login');
-    }
-});
-
 // Auth Routes
 app.get('/welcome', (req, res) => {
     if (req.session.user) return res.redirect('/');
