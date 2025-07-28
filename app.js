@@ -220,6 +220,109 @@ async function testDbConnection() {
 
 testDbConnection();
 
+// Add this function to your app.js
+async function testDatabase() {
+    let connection;
+    try {
+      console.log('Starting database test...');
+      
+      // 1. Test basic connection
+      connection = await pool.getConnection();
+      console.log('✅ Database connection successful');
+      
+      // 2. Test users table exists
+      const [tables] = await connection.query(`
+        SELECT TABLE_NAME 
+        FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'`,
+        [process.env.DB_NAME || 'GPATracker_scienceegg']
+      );
+      
+      if (tables.length === 0) {
+        console.log('⚠️ Users table does not exist');
+        return false;
+      }
+      console.log('✅ Users table exists');
+      
+      // 3. Test table structure
+      const [columns] = await connection.query(`
+        SELECT COLUMN_NAME, DATA_TYPE 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'`,
+        [process.env.DB_NAME || 'GPATracker_scienceegg']
+      );
+      
+      const requiredColumns = [
+        { name: 'id', type: 'int' },
+        { name: 'username', type: 'varchar' },
+        { name: 'email', type: 'varchar' },
+        { name: 'password', type: 'varchar' },
+        { name: 'current_gpa', type: 'decimal' },
+        { name: 'total_mc', type: 'int' }
+      ];
+      
+      let structureValid = true;
+      requiredColumns.forEach(reqCol => {
+        const found = columns.some(col => 
+          col.COLUMN_NAME === reqCol.name && 
+          col.DATA_TYPE.toLowerCase().includes(reqCol.type)
+        );
+        if (!found) {
+          console.log(`❌ Missing or invalid column: ${reqCol.name} (${reqCol.type})`);
+          structureValid = false;
+        }
+      });
+      
+      if (!structureValid) {
+        console.log('⚠️ Users table structure is invalid');
+        return false;
+      }
+      console.log('✅ Users table structure is valid');
+      
+      // 4. Test basic query
+      const [users] = await connection.query('SELECT COUNT(*) as count FROM users');
+      console.log(`✅ Basic query successful. Found ${users[0].count} users`);
+      
+      // 5. Test insert operation (will be rolled back)
+      await connection.beginTransaction();
+      try {
+        const testEmail = `test_${Date.now()}@test.com`;
+        const [result] = await connection.query(
+          'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+          ['test_user', testEmail, 'test_password']
+        );
+        
+        if (result.affectedRows === 1) {
+          console.log('✅ Insert operation successful');
+        } else {
+          console.log('❌ Insert operation failed');
+          return false;
+        }
+      } finally {
+        await connection.rollback();
+        console.log('✅ Test transaction rolled back');
+      }
+      
+      console.log('🎉 All database tests passed successfully!');
+      return true;
+      
+    } catch (err) {
+      console.error('❌ Database test failed:', err.message);
+      return false;
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+  
+  // Call this function when your server starts
+  testDatabase().then(success => {
+    if (!success) {
+      console.error('Database configuration issues detected');
+      // Optionally exit if tests fail
+      // process.exit(1);
+    }
+  });
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
