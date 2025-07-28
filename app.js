@@ -78,33 +78,58 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
+    let connection;
     try {
         const { email, password } = req.body;
         
+        if (!email || !password) {
+            req.flash('error', 'Email and password are required');
+            return res.redirect('/login');
+        }
+
+        connection = await pool.getConnection();
+        
         // Check if user exists
-        const [users] = await pool.query(
+        const [users] = await connection.query(
             'SELECT * FROM users WHERE email = ?', 
             [email]
         );
         
-        if (users.length === 0 || !await bcrypt.compare(password, users[0].password)) {
+        if (users.length === 0) {
+            req.flash('error', 'Invalid credentials');
+            return res.redirect('/login');
+        }
+        
+        const user = users[0];
+        
+        if (!await bcrypt.compare(password, user.password)) {
             req.flash('error', 'Invalid credentials');
             return res.redirect('/login');
         }
         
         // Set session
         req.session.user = {
-            id: users[0].id,
-            username: users[0].username,
-            email: users[0].email
+            id: user.id,
+            username: user.username,
+            email: user.email
         };
         
-        return res.redirect('/'); // or your dashboard route
+        // Ensure session is saved before redirect
+        req.session.save(err => {
+            if (err) {
+                console.error('Session save error:', err);
+                req.flash('error', 'Login failed');
+                return res.redirect('/login');
+            }
+            return res.redirect('/dashboard'); // Make sure this matches your actual dashboard route
+        });
         
     } catch (err) {
         console.error('Login error:', err);
         req.flash('error', 'Login failed');
         return res.redirect('/login');
+    } finally {
+        if (connection) connection.release();
     }
 });
 
@@ -114,11 +139,20 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
+    let connection;
     try {
         const { username, email, password } = req.body;
         
+        // Basic validation
+        if (!username || !email || !password) {
+            req.flash('error', 'All fields are required');
+            return res.redirect('/register');
+        }
+
+        connection = await pool.getConnection();
+        
         // Check if user exists
-        const [existing] = await pool.query(
+        const [existing] = await connection.query(
             'SELECT id FROM users WHERE email = ?', 
             [email]
         );
@@ -132,7 +166,7 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         
         // Create user
-        const [result] = await pool.query(
+        const [result] = await connection.query(
             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
             [username, email, hashedPassword]
         );
@@ -140,13 +174,15 @@ app.post('/register', async (req, res) => {
         if (result.affectedRows === 1) {
             req.flash('success', 'Registration successful. Please login.');
             return res.redirect('/login');
-        } else {
-            throw new Error('Registration failed');
         }
+        throw new Error('Registration failed - no rows affected');
+        
     } catch (err) {
         console.error('Registration error:', err);
-        req.flash('error', 'Registration failed');
+        req.flash('error', 'Registration failed. Please try again.');
         return res.redirect('/register');
+    } finally {
+        if (connection) connection.release();
     }
 });
 
