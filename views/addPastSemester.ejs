@@ -19,113 +19,127 @@
 
 
         <div class="container">
-            <br> 
-            <div>
-                <form action="/addPastSemester" method="POST">
-                    
-                    <div class="row g-4">
-                    <div class="col-auto text-center">
-                    <label for="semester" >Semester Name:</label>
-                    </div>
+    <br> 
+    <div>
+        <!-- Form to submit a new past semester and its modules -->
+        <form action="/addPastSemester" method="POST">
+            
+            <!-- Semester Selection Row -->
+            <div class="row g-4">
+                <div class="col-auto text-center">
+                    <label for="semester">Semester Name:</label>
+                </div>
 
-                    <div class="col-auto">
-                    <select  id="semester" name="semester" required>
-                    <option>Y1S1</option>
-                    <option>Y1S2</option>
-                    <option>Y2S1</option>
-                    <option>Y2S2</option>
-                    <option>Y3S1</option>
-                    <option>Y3S2</option>
+                <div class="col-auto">
+                    <!-- Dropdown to select semester -->
+                    <select id="semester" name="semester" required>
+                        <option>Y1S1</option>
+                        <option>Y1S2</option>
                     </select>
-                    </div>
-                    </div>
-                
-                    <br>
-                    <button class="btn" type="button" id="add-module-btn" style="background-color: #3f51b5; color:white">Add Module +</button>
-                    <br><br><br>
-                    
-                   
-                    <div id="module-container"> <!-- Module container -->
-                    <div class="module-group row g-4">   <!-- Module group -->
-                    <div class="col-auto text-center">
-                    <label for="module">Module Name</label><br><br>
-                    <input type="text" name="module[]" required><br><br>
-                    </div>
-
-                    <div class="col-auto text-center">
-                    <label for="code">Module Code</label><br><br>
-                    <input type="text" name="code[]" required><br><br>
-                    </div>
-
-                    <div class="col-auto text-center">
-                    <label for="grade">Final Grade</label><br><br>
-                    <select name="grade[]" required>
-                    <option>A</option>
-                    <option>B+</option>
-                    <option>B</option>
-                    <option>C+</option>
-                    <option>C</option>
-                    <option>D+</option>
-                    <option>D</option>
-                    <option>F</option>
-                    <option>Pass</option>
-                    </select>
-                    </div>
-
-                    <div class="col-auto text-center">
-                    <label for="credits">Module Credits</label><br><br>
-                    <input type="number" class="text-center" name="credits[]" min="1" max="6" step="1" required><br><br>
-                    </div>
-
-                    <div class="col-auto">
-                    <button class="btn btn-sm delete-module-btn" type="button" style="background-color: #3f51b5; color:white;">Delete</button>
-                    </div>
-
-                    </div>
-                    </div>
-                    
-                    <br><br>
-                    <button class="btn" type="submit" style="background-color: #3f51b5; color:white">Save</button>
-                </form>
+                </div>
             </div>
-        </div>
+        
+            <br>
+
+            <!-- Button to add a new module row (JS will clone the module input section) -->
+            <button class="btn" type="button" id="add-module-btn" style="background-color: #3f51b5; color:white">Add Module +</button>
+            <br><br><br>
+            
+            <!-- Container that holds all module groups -->
+            <div id="module-container">
+
+                <!-- One module entry group (input row) -->
+                <div class="module-group row g-4">
+
+                    <!-- Module Name -->
+                    <div class="col-auto text-center">
+                        <label for="module">Module Name</label><br><br>
+                        <input type="text" name="module[]" required><br><br>
+                    </div>
+
+                    <!-- Module Code -->
+                    <div class="col-auto text-center">
+                        <label for="code">Module Code</label><br><br>
+                        <input type="text" name="code[]" required><br><br>
+                    </div>
+
+                    <!-- Final Grade -->
+                    <div class="col-auto text-center">
+                        <label for="grade">Final Grade</label><br><br>
+                        <select name="grade[]" required>
+                            <option>A</option>
+                            <option>B+</option>
+                            <option>B</option>
+                            <option>C+</option>
+                            <option>C</option>
+                            <option>D+</option>
+                            <option>D</option>
+                            <option>F</option>
+                            <option>Pass</option>
+                        </select>
+                    </div>
+
+                    <!-- Module Credits -->
+                    <div class="col-auto text-center">
+                        <label for="credits">Module Credits</label><br><br>
+                        <input type="number" class="text-center" name="credits[]" min="1" max="6" step="1" required><br><br>
+                    </div>
+
+                    <!-- Delete Button for module -->
+                    <div class="col-auto">
+                        <button class="btn btn-sm delete-module-btn" type="button" style="background-color: #3f51b5; color:white;">Delete</button>
+                    </div>
+
+                </div>
+            </div>
+            
+            <br><br>
+
+            <!-- Final save button -->
+            <button class="btn" type="submit" style="background-color: #3f51b5; color:white">Save</button>
+        </form>
+    </div>
+</div>
         
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-    const addButton = document.getElementById('add-module-btn');
-    const container = document.getElementById('module-container');
+    const addButton = document.getElementById('add-module-btn'); // Button to add new module inputs
+    const container = document.getElementById('module-container'); // Where module inputs go
 
-    // Function to bind delete button event
+    // Bind delete buttons when page loads or new modules are added
     function bindDeleteButtons() {
         const deleteButtons = container.querySelectorAll('.btn[type="button"]');
-
         deleteButtons.forEach(button => {
             button.removeEventListener('click', deleteHandler); // prevent duplicates
             button.addEventListener('click', deleteHandler);
         });
     }
 
-    // Delete handler function
+    // What happens when delete button is clicked
     function deleteHandler(event) {
+        const confirmed = confirm("Are you sure you want to delete this module?");
+        if (!confirmed) return; // Cancel deletion if user says no
+
         const allGroups = container.querySelectorAll('.module-group');
         if (allGroups.length <= 1) {
-            alert("At least one module is required.");
+            alert("At least one module is required."); // Prevent removing the last group
             return;
         }
 
+        // Remove the entire group of inputs for that module
         const moduleGroup = event.target.closest('.module-group');
         if (moduleGroup) {
             container.removeChild(moduleGroup);
         }
     }
 
-    // Add module button logic
+    // When the "Add Module" button is clicked
     addButton.addEventListener('click', () => {
         const moduleGroups = container.querySelectorAll('.module-group');
         const lastGroup = moduleGroups[moduleGroups.length - 1];
 
-        // Validate last group before cloning
+        // Check if all inputs in last group are filled before adding another
         const inputs = lastGroup.querySelectorAll('input, select');
         let filled = true;
         inputs.forEach(input => {
@@ -137,15 +151,17 @@
             return;
         }
 
+        // Clone the last module group, clear its values
         const clone = lastGroup.cloneNode(true);
         clone.querySelectorAll('input, select').forEach(input => input.value = '');
         container.appendChild(clone);
-        bindDeleteButtons(); // rebind delete buttons
+        bindDeleteButtons(); // Re-bind delete to new group
     });
 
-    bindDeleteButtons(); // initial bind
+    bindDeleteButtons(); // Bind on first page load
     });
     </script>
+
     </body>
 </html>
 

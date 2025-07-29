@@ -15,56 +15,78 @@
     </nav> <br>
 
     <br>
-    <div style="display: flex;">
+    <!-- Container to align the semester title and Edit button in a row -->
+<div style="display: flex;">
+
+    <!-- If there are modules in this semester, show the semester name from the first module -->
     <% if (pastsemester.length > 0) { %>
-    <h6 style="padding-left: 20px;">Semester: <%= pastsemester[0].semester %></h6>
+        <h6 style="padding-left: 20px;">Semester: <%= pastsemester[0].semester %></h6>
     <% } else { %>
-      <h6 style="padding-left: 20px;">Semester: <%= semesterId %></h6>
-      <p style="padding-left: 20px;">No modules in this semester yet.</p>
+        <!-- If there are no modules, show fallback semester ID and message -->
+        <h6 style="padding-left: 20px;">Semester: <%= semesterId %></h6>
+        <p style="padding-left: 20px;">No modules in this semester yet.</p>
     <% } %>
-    <!-- Edit Link -->
-    <a class="btn" style="margin-left: 55rem; background-color: #3f51b5; color:white" type="button" href="/editPastSemester">Edit</a>
-    </div>
-    </br>
 
+    <!-- Edit button that navigates to the edit page of this semester -->
+    <a class="btn" 
+       style="margin-left: 55rem; background-color: #3f51b5; color:white" 
+       type="button" 
+       href="/editPastSemester/<%= pastsemester[0].semesterId %>">Edit</a>
+</div>
+</br>
 
-    <h5 style="padding-left: 20px;">Modules:</h5>
-    
-    
-    <div class="row" style="padding-left: 20px;">
-    <div class="col-auto">
+<!-- Title for the modules table -->
+<h5 style="padding-left: 20px;">Modules:</h5>
+
+<!-- Bootstrap row and column for layout -->
+<div class="row" style="padding-left: 20px;">
+  <div class="col-auto">
+
+    <!-- Module data table -->
     <table class="table small text-center" style="min-width: 1000px;">
       <thead>
           <tr>
-            <th>Module Name</th>
-            <th>Module Code</th>
-            <th>Final Grade</th>
-            <th>Module Credits</th>
-            <th></th>
+            <th>Module Name</th>     <!-- Header: name of the module -->
+            <th>Module Code</th>     <!-- Header: code e.g. CS1010 -->
+            <th>Final Grade</th>     <!-- Header: grade received -->
+            <th>Module Credits</th>  <!-- Header: how many credits -->
+            <th></th>                <!-- Empty column for delete button -->
+          </tr>
       </thead>
+
       <tbody>
-         <% if (pastsemester) { %> <!-- Check if student data exists -->
-            <% for(let i=0; i < pastsemester.length; i++) { %>
+        <!-- Check if data exists before rendering -->
+        <% if (pastsemester) { %>
+            <!-- Loop through each module entry -->
+            <% for(let i = 0; i < pastsemester.length; i++) { %>
               <tr>
-                <td><%= pastsemester[i].module%></td>
-                <td><%= pastsemester[i].code%></td>
-                <td><%= pastsemester[i].grade%></td>
-                <td><%= pastsemester[i].credits%></td>
-                <!-- Delete Link -->
-                <td><a class="btn btn-sm" type="button" style="background-color: #3f51b5; color:white"  href="/deletePastModule/<%= pastsemester[i].moduleId %>" onclick="return confirm('Are you sure you want to delete this module?')">Delete</a></td>
+                <!-- Display module data from each row -->
+                <td><%= pastsemester[i].module %></td>
+                <td><%= pastsemester[i].code %></td>
+                <td><%= pastsemester[i].grade %></td>
+                <td><%= pastsemester[i].credits %></td>
+
+                <!-- Delete button for this module. Confirmation prompt will appear. -->
+                <td>
+                  <a class="btn btn-sm" 
+                     type="button" 
+                     style="background-color: #3f51b5; color:white"  
+                     href="/deletePastModule/<%= pastsemester[i].moduleId %>" 
+                     onclick="return confirm('Are you sure you want to delete this module?')">
+                    Delete
+                  </a>
+                </td>
               </tr>
             <% } %>
         <% } else { %>
+            <!-- If no data found, display this -->
             <p>No past semester found.</p>
         <% } %>
       </tbody>
     </table>
-    </div>
-    </div> 
-  
-    
-    
 
+  </div>
+</div>
   
 </body>
 </html>
