@@ -1,0 +1,119 @@
+<!-- GPA Tracker - index.ejs (Adhav) -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <title>GPA Tracker</title>
+</head>
+<body>
+  <div class="container">
+    <a class="navbar-brand" href="/"><img src="/uploads/GPA Tracker 3.png" style="width: 200px"></a>
+    <div class="d-flex">
+        <span class="navbar-text text-white me-3">Welcome, <%= user.username %></span>
+        <a href="/logout" class="btn btn-outline-light">Logout</a>
+    </div>
+</div>
+
+  
+  
+  <!-- GPA Summary Section -->
+  <div class="container-fluid px-0">
+    <div class="card shadow-sm rounded-0" style="background-color: #60A5FA; border-left: 5px solid #1E3A8A;">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <!-- Current GPA -->
+          <div class="col-md-6 text-center">
+            <div class="d-flex flex-column align-items-center">
+              <h4 class="mb-3" style="color: 	#F8FAFC;">Current GPA</h4>
+              <h2 class="display-4 mb-3" style="color: #F8FAFC;">0.00</h2>
+              <a href="/addGPA" class="btn" style="background-color: #F8FAFC; border-color: #F8FAFC; color: #1E3A8A;">
+                Add GPA
+              </a>
+            </div>
+          </div>
+          
+          <!-- Divider -->
+          <div class="col-md-1 text-center">
+            <div style="border-left: 1px solid #F8FAFC; height: 120px;"></div>
+          </div>
+          
+          <!-- Projected GPA -->
+          <div class="col-md-5 text-center">
+            <div class="d-flex flex-column align-items-center">
+              <h4 class="mb-3" style="color: #F8FAFC;">Projected GPA</h4>
+              <h2 class="display-4 mb-3" style="color: #F8FAFC;">0.00</h2>
+              <small style="color: #F8FAFC;">
+                <span>No change</span>
+                from current
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modules Section -->
+<div class="container-fluid px-0 mt-0">
+  <div class="card rounded-0" style="background-color: 	#F8FAFC; border-left: 5px solid #1E3A8A;">
+    <div class="card-body">
+      <!-- Column Headers -->
+      <div class="row fw-bold mb-3" style="color: #1E3A8A;">
+        <div class="col-md-5">Module Name</div>
+        <div class="col-md-3">Module Code</div>
+        <div class="col-md-3">Projected Grade</div>
+        <div class="col-md-1"></div> <!-- Empty column for alignment -->
+      </div>
+      
+      <!-- Empty State (when no modules added) -->
+      <div class="row py-4 text-center" style="color: #8987bc;">
+        <div class="col-12">
+          No modules added yet
+        </div>
+      </div>
+      
+      <!-- Add Module Button -->
+      <div class="row mt-3">
+        <div class="col-12 text-left">
+          <a href="/addModule" class="btn" style="background-color: #10B981; color: #F8FAFC; border: none;">
+            + Add Module
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Past Semesters Section -->
+  <div class="container-fluid px-0 mt-0">
+    <div class="card rounded-0" style="background-color: 	#F8FAFC; border-left: 5px solid #1E3A8A;">
+      <div class="card-body">
+        <!-- Section Title -->
+        <div class="row fw-bold mb-3" style="color: #1E3A8A;">
+          <div class="col-12">
+            Past Semesters
+          </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="row py-4 text-center" style="color: #8987bc;">
+          <div class="col-12">
+            No past semesters recorded yet
+          </div>
+        </div>
+        
+        <!-- Add Semester Button -->
+        <div class="row mt-3">
+          <div class="col-12 text-left">
+            <a href="/addPastSemester" class="btn" style="background-color: #10B981; color: #F8FAFC; border: none;">
+              + Add Semester
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
