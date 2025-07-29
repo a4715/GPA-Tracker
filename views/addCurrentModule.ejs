@@ -1,0 +1,28 @@
+<!-- views/addCurrentModule.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Module</title>
+</head>
+<body>
+    <h1>Add Current Semester Module</h1>
+    <% if (messages.error) { %>
+        <p style="color:red;"><%= messages.error %></p>
+    <% } %>
+    <% if (messages.success) { %>
+        <p style="color:green;"><%= messages.success %></p>
+    <% } %>
+    <form action="/addCurrentModule" method="POST">
+        <label>Module Name:</label><br>
+        <input type="text" name="moduleName" required><br><br>
+
+        <label>Credits:</label><br>
+        <input type="number" name="credits" required><br><br>
+
+        <label>Expected Grade:</label><br>
+        <input type="text" name="grade" required><br><br>
+
+        <button type="submit">Add Module</button>
+    </form>
+</body>
+</html>
