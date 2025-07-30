@@ -51,9 +51,11 @@ const checkAuthenticated = (req, res, next) => {
 
 // --- ROUTES ---
 
-app.get('/', (req, res) => {
-    if (req.session.user) return res.redirect('/');
-    res.redirect('/welcome');
+app.get('/', checkAuthenticated, (req, res) => {
+    res.render('index', {
+        currentGPA: 0.00,
+        projectedGPA: 0.00
+    });
 });
 
 app.get('/welcome', (req, res) => {
@@ -257,6 +259,7 @@ testDatabase().then(success => {
         // process.exit(1); // Optionally exit on error
     }
 });
+
 
 
 app.listen(PORT, '0.0.0.0', () => {
