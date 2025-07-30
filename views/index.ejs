@@ -97,11 +97,41 @@
           </div>
         </div>
         
-        <!-- Empty State -->
-        <div class="row py-4 text-center" style="color: #8987bc;">
-          <div class="col-12">
-            No past semesters recorded yet
-          </div>
+        <!-- Past Semesters List or Empty List (Xinfang) -->
+        <div class="row py-4" style="color: #8987bc;">
+        <div class="col-12">
+            <% if (pastsemester.length > 0) { %>
+
+            <% 
+            // Create an array to hold unique semesters
+            const uniqueSemesters = [];
+            // Create a Set to track which semester names already added
+            const seen = new Set();
+
+            // Loop through all past semester entries
+            for (let i = 0; i < pastsemester.length; i++) {
+                const sem = pastsemester[i];
+                // If we haven't added this semester name yet
+                if (!seen.has(sem.semester)) {
+                    seen.add(sem.semester);
+                    uniqueSemesters.push({ name: sem.semester, id: sem.semesterId });
+                }
+            }
+
+            // Sort the unique semesters alphabetically (e.g., Y1S1, Y1S2)
+            uniqueSemesters.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Now loop through the sorted, unique semesters and display as links
+            uniqueSemesters.forEach(sem => {
+            %>
+                <!-- Link to view modules for this semester -->
+                <a href="/viewPastSemester/<%= sem.id %>" style="font-size: 20px; font-weight: bold;"><%= sem.name %></a><br><br>
+            <% }); %>
+
+            <% } else { %>
+            <p>No past semesters recorded yet.</p>
+            <% } %>
+        </div>
         </div>
         
         <!-- Add Semester Button -->
