@@ -293,6 +293,164 @@ async function testDatabase() {
     }
   });
 
+// Jenelle CurrentMod & Details
+app.get('/moduleDetails', (req, res) => {
+  connection.query('SELECT * FROM modules', (err, modules) => {
+    if (err) return res.send('Error loading modules');
+
+    connection.query('SELECT * FROM components', (err2, components) => {
+      if (err2) return res.send('Error loading components');
+
+      res.render('moduleDetails', {
+        modules,
+        components
+      });
+    });
+  });
+});
+
+app.get('/moduleDetails/:id', (req, res) => {
+  const moduleId = req.params.id;
+  connection.query('SELECT * FROM modules WHERE module_id = ?', [moduleId], (err, moduleResults) => {
+    if (err || moduleResults.length === 0) {
+      console.error(err || 'Module not found.');
+      return res.send('Module not found or error.');
+    }
+
+    const module = moduleResults[0];
+    connection.query('SELECT * FROM components WHERE module_id = ?', [moduleId], (err2, components) => {
+      if (err2) {
+        console.error(err2);
+        return res.send('Error loading components.');
+      }
+      res.render('moduleDetails', {
+        modules: module,
+        components: components
+      });
+    });
+  });
+});
+
+app.get('/editCurrentModule/:id', (req, res) => {
+  const moduleId = req.params.id;
+  connection.query('SELECT * FROM modules WHERE module_id = ?', [moduleId], (err, moduleResults) => {
+    if (err || moduleResults.length === 0) {
+      console.error(err || 'Module not found.');
+      return res.send('Module not found or error.');
+    }
+
+    const module = moduleResults[0];
+    connection.query('SELECT * FROM components WHERE module_id = ?', [moduleId], (err2, components) => {
+      if (err2) {
+        console.error(err2);
+        return res.send('Error loading components.');
+      }
+      res.render('editCurrentModule', {
+        modules: module,
+        components: components
+      });
+    });
+  });
+});
+
+app.post('/editCurrentModule/:id', (req, res) => {
+  const moduleId = req.params.id;
+  const module_name = req.body.module_name;
+  const module_code = req.body.module_code;
+  const updateModuleSQL = 'UPDATE modules SET module_name = ?, module_code = ? WHERE module_id = ?';
+
+  connection.query(updateModuleSQL, [module_name, module_code, moduleId], (err) => {
+    if (err) {
+      console.error('Error updating module:', err);
+      return res.send('Error updating module info.');
+    }
+    const updates = [];
+
+    for (const key in req.body) {
+      if (key.startsWith('component_id_')) {
+        const index = key.split('_')[2];
+        const compId = req.body[key];
+        const compName = req.body['component_name_' + index];
+        const grade = req.body['grade_' + index];
+        const weightage = parseInt(req.body['weightage_' + index]);
+        if (compId && compName && grade && !isNaN(weightage)) {
+          updates.push({ compId, compName, grade, weightage });
+        }
+      }
+    }
+
+    const updateComponentSQL = 'UPDATE components SET component_name = ?, grade = ?, weightage = ? WHERE id = ?';
+    let promises = updates.map(({ compId, compName, grade, weightage }) => {
+      return new Promise((resolve, reject) => {
+        connection.query(updateComponentSQL, [compName, grade, weightage, compId], (error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+    });
+
+    Promise.all(promises)
+      .then(() => {
+        res.redirect('/editCurrentModule/' + moduleId);
+      })
+      .catch((error) => {
+        console.error('Error updating components:', error);
+        res.send('Error updating components.');
+      });
+  });
+});
+
+app.post('/updateModuleInfo/:id', (req, res) => {
+  const moduleId = req.params.id;
+  const { module_name, module_code } = req.body;
+
+  const sql = 'UPDATE modules SET module_name = ?, module_code = ? WHERE module_id = ?';
+  connection.query(sql, [module_name, module_code, moduleId], (err) => {
+    if (err) throw err;
+    res.redirect('/moduleDetails/' + moduleId);
+  });
+});
+
+app.post('/editComponent', (req, res) => {
+  const component_id = req.body.component_id;
+  const module_id = req.body.module_id;
+  const component_name = req.body.component_name;
+  const grade = req.body.grade;
+  const weightage = parseInt(req.body.weightage);
+
+  if (!component_id || !module_id || !component_name || !grade || isNaN(weightage)) {
+    return res.send('Invalid input');
+  }
+
+  const sql = `UPDATE components
+               SET component_name = ?, grade = ?, weightage = ?
+               WHERE id = ?`;
+
+  connection.query(sql, [component_name, grade, weightage, component_id], (err) => {
+    if (err) {
+      console.error('Failed to update component:', err);
+      return res.send('Error updating component');
+    }
+    res.redirect('/editCurrentModule/' + module_id);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.get('/deleteComponent/:id', (req, res) => {
+  const componentId = req.params.id;
+  const moduleId = req.query.module_id;
+  const deleteQuery = 'DELETE FROM components WHERE id = ?';
+
+  connection.query(deleteQuery, [componentId], (error, results) => {
+    if (error) {
+      console.error("Error deleting component:", error);
+      res.status(500).send('Error deleting component');
+    } else {
+      res.redirect('/editCurrentModule/' + moduleId);
+    }
+  });
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
