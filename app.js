@@ -114,47 +114,99 @@ app.get('/register', (req, res) => {
     res.render('register', { error: req.flash('error') });
 });
 
+// app.post('/register', async (req, res) => {
+//     let connection;
+//     try {
+//         const { username, email, password } = req.body;
+
+//         if (!username || !email || !password) {
+//             req.flash('error', 'All fields are required');
+//             return res.redirect('/register');
+//         }
+
+//         connection = await pool.getConnection();
+
+//         const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+//         if (existing.length > 0) {
+//             req.flash('error', 'Email already registered');
+//             return res.redirect('/register');
+//         }
+
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         const [result] = await connection.query(
+//             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
+//             [username, email, hashedPassword]
+//         );
+
+//         if (result.affectedRows === 1) {
+//             console.log('✅ New user inserted with ID:', result.insertId);
+//             req.flash('success', 'Registration successful. Please login.');
+//             return res.redirect('/login');
+//         }
+
+//         throw new Error('Registration failed');
+
+//     } catch (err) {
+//         console.error('Registration error:', err);
+//         req.flash('error', 'Registration failed. Please try again.');
+//         return res.redirect('/register');
+//     } finally { 
+//         if (connection) connection.release();
+//     }
+// });
+
 app.post('/register', async (req, res) => {
     let connection;
     try {
         const { username, email, password } = req.body;
+        console.log('[REGISTER] Received:', { username, email });
 
         if (!username || !email || !password) {
+            console.log('[REGISTER] Missing fields');
             req.flash('error', 'All fields are required');
             return res.redirect('/register');
         }
 
         connection = await pool.getConnection();
+        console.log('[REGISTER] Got DB connection');
 
         const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+        console.log('[REGISTER] Existing users with email:', existing.length);
+
         if (existing.length > 0) {
+            console.log('[REGISTER] Email already registered');
             req.flash('error', 'Email already registered');
             return res.redirect('/register');
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('[REGISTER] Hashed password');
 
         const [result] = await connection.query(
             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
             [username, email, hashedPassword]
         );
 
+        console.log('[REGISTER] Insert result:', result);
+
         if (result.affectedRows === 1) {
-            console.log('✅ New user inserted with ID:', result.insertId);
+            console.log('[REGISTER] Success — New user ID:', result.insertId);
             req.flash('success', 'Registration successful. Please login.');
             return res.redirect('/login');
         }
 
-        throw new Error('Registration failed');
+        throw new Error('Insert failed — no rows affected');
 
     } catch (err) {
-        console.error('Registration error:', err);
+        console.error('[REGISTER] Error:', err.message);
         req.flash('error', 'Registration failed. Please try again.');
         return res.redirect('/register');
-    } finally { 
+    } finally {
         if (connection) connection.release();
     }
 });
+
 
 
 app.get('/logout', (req, res) => {
