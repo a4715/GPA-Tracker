@@ -114,6 +114,9 @@ app.get('/register', (req, res) => {
     res.render('register', { error: req.flash('error') });
 });
 
+console.log('Register attempt:', { username, email, password });
+// i added above part to log attempts
+
 app.post('/register', async (req, res) => {
     let connection;
     try {
@@ -140,6 +143,7 @@ app.post('/register', async (req, res) => {
         );
 
         if (result.affectedRows === 1) {
+            console.log('✅ New user inserted with ID:', result.insertId);
             req.flash('success', 'Registration successful. Please login.');
             return res.redirect('/login');
         }
@@ -154,6 +158,7 @@ app.post('/register', async (req, res) => {
         if (connection) connection.release();
     }
 });
+
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
