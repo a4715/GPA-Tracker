@@ -114,9 +114,6 @@ app.get('/register', (req, res) => {
     res.render('register', { error: req.flash('error') });
 });
 
-console.log('Register attempt:', { username, email, password });
-// i added above part to log attempts
-
 app.post('/register', async (req, res) => {
     let connection;
     try {
@@ -154,7 +151,7 @@ app.post('/register', async (req, res) => {
         console.error('Registration error:', err);
         req.flash('error', 'Registration failed. Please try again.');
         return res.redirect('/register');
-    } finally {
+    } finally { 
         if (connection) connection.release();
     }
 });
