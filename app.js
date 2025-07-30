@@ -1,194 +1,164 @@
-// app.js - GPA Tracker
+// // app.js - GPA Tracker
 
 const express = require('express');
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
+
+//******** TODO: Insert code to import 'express-session' *********//
 const session = require('express-session');
+
 const flash = require('connect-flash');
-const bcrypt = require('bcrypt');
-require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Database connection pool
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'b-poe6.h.filess.io',
-    user: process.env.DB_USER || 'GPATracker_scienceegg',
-    password: process.env.DB_PASSWORD || '654f0adde2031c3b3a37a16b33f789327db4a9d0',
-    database: process.env.DB_NAME || 'GPATracker_scienceegg',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    connectTimeout: 10000, // 10 seconds timeout
-    acquireTimeout: 10000  // 10 seconds timeout
+// Database connection
+const db = mysql.createConnection({
+    host: 'b-poe6.h.filess.io',
+    port: 61002,
+    user: 'GPATracker_scienceegg',
+    password: '654f0adde2031c3b3a37a16b33f789327db4a9d0',
+    database: 'GPATracker_scienceegg'
 });
 
-// Middleware
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-app.use(express.static('public'));
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
+db.connect((err) => {
+    if (err) {
+        throw err;
     }
+    console.log('Connected to database');
+});
+
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static('public'));
+
+//******** TODO: Insert code for Session Middleware below ********//
+app.use(session({
+    secret: 'secret',
+    reserve: false,
+    sawUninitialized: true,
+    // Session expires after 1 week of inactivity
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
+
 app.use(flash());
 
-app.use((req, res, next) => {
-    console.log('Session:', req.session);
-    next();
-});
-
-
-// Set view engine
+// Setting up EJS
 app.set('view engine', 'ejs');
 
-// Authentication middleware
+//******** TODO: Create a Middleware to check if user is logged in. ********//
 const checkAuthenticated = (req, res, next) => {
     if (req.session.user) {
         return next();
+    } else {
+        req.flash('error', 'Please log in to view this resource');
+        res.redirect('/login');
     }
-    req.flash('error', 'Please login to view this page');
-    res.redirect('/login');
+};
+
+//******** TODO: Create a Middleware to check if user is admin. ********//
+const checkAdmin = (req, res, next) => {
+    if (req.session.user.role == 'admin') {
+        return next();
+    } else {
+        req.flash('error', 'Access denied');
+        res.redirect('/dashboard');
+    }
 };
 
 // Routes
-
 app.get('/', (req, res) => {
-    if (req.session.user) {
-        return res.redirect('/dashboard'); // or your main app page
-    }
-    res.redirect('/welcome');
-});
-
-// Auth Routes
-app.get('/welcome', (req, res) => {
-    if (req.session.user) return res.redirect('/');
-    res.render('welcome');
-});
-
-app.get('/login', (req, res) => {
-    if (req.session.user) return res.redirect('/');
-    res.render('login', { error: req.flash('error') });
-});
-
-app.post('/login', async (req, res) => {
-    let connection;
-    try {
-        const { email, password } = req.body;
-        
-        if (!email || !password) {
-            req.flash('error', 'Email and password are required');
-            return res.redirect('/login');
-        }
-
-        connection = await pool.getConnection();
-        
-        // Check if user exists
-        const [users] = await connection.query(
-            'SELECT * FROM users WHERE email = ?', 
-            [email]
-        );
-        
-        if (users.length === 0) {
-            req.flash('error', 'Invalid credentials');
-            return res.redirect('/login');
-        }
-        
-        const user = users[0];
-        
-        if (!await bcrypt.compare(password, user.password)) {
-            req.flash('error', 'Invalid credentials');
-            return res.redirect('/login');
-        }
-        
-        // Set session
-        req.session.user = {
-            id: user.id,
-            username: user.username,
-            email: user.email
-        };
-        
-        // Ensure session is saved before redirect
-        req.session.save(err => {
-            if (err) {
-                console.error('Session save error:', err);
-                req.flash('error', 'Login failed');
-                return res.redirect('/login');
-            }
-            return res.redirect('/dashboard'); // Make sure this matches your actual dashboard route
-        });
-        
-    } catch (err) {
-        console.error('Login error:', err);
-        req.flash('error', 'Login failed');
-        return res.redirect('/login');
-    } finally {
-        if (connection) connection.release();
-    }
+    res.render('index', { user: req.session.user, messages: req.flash('success')});
 });
 
 app.get('/register', (req, res) => {
-    if (req.session.user) return res.redirect('/');
-    res.render('register', { error: req.flash('error') });
+    res.render('register', { messages: req.flash('error'), formData: req.flash('formData')[0] });
 });
 
-app.post('/register', async (req, res) => {
-    let connection;
-    try {
-        const { username, email, password } = req.body;
-        
-        // Basic validation
-        if (!username || !email || !password) {
-            req.flash('error', 'All fields are required');
-            return res.redirect('/register');
-        }
 
-        connection = await pool.getConnection();
-        
-        // Check if user exists
-        const [existing] = await connection.query(
-            'SELECT id FROM users WHERE email = ?', 
-            [email]
-        );
-        
-        if (existing.length > 0) {
-            req.flash('error', 'Email already registered');
-            return res.redirect('/register');
-        }
-        
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Create user
-        const [result] = await connection.query(
-            'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
-            [username, email, hashedPassword]
-        );
-        
-        if (result.affectedRows === 1) {
-            req.flash('success', 'Registration successful. Please login.');
-            return res.redirect('/login');
-        }
-        throw new Error('Registration failed - no rows affected');
-        
-    } catch (err) {
-        console.error('Registration error:', err);
-        req.flash('error', 'Registration failed. Please try again.');
-        return res.redirect('/register');
-    } finally {
-        if (connection) connection.release();
+//******** TODO: Create a middleware function validateRegistration ********//
+//TO DO: Create a middleware function validateRegistration
+const validateRegistration = (req, res, next) => {
+    const { username, email, password, address, contact } = req.body;
+
+    if (!username || !email || !password || !address || !contact) {
+        return res.status(400).send('All fields are required.');
     }
+
+    if (password.length < 6) {
+        req.flash('error', 'Password should be at least 6 or more characters long');
+        req.flash('formData', req.body);
+        return res.redirect('/register');
+    }
+    next(); //If all validations pass, the next function is called, allowing the request to proceed to the new function.
+};
+
+//******** TODO: Integrate validateRegistration into the register route. ********//
+app.post('/register', validateRegistration, (req, res) => {
+    //******** TODO: Update register route to include role. ********//
+    const { username, email, password, address, contact, role } = req.body;
+
+    const sql = 'INSERT INTO users (username, email, password, address, contact, role) VALUES (?, ?, SHA1(?), ?, ?, ?)';
+    db.query(sql, [username, email, password, address, contact, role], (err, result) => {
+        if (err) {
+            throw err;
+        }
+        console.log(result);
+        req.flash('success', 'Registration successful! Please log in.');
+        res.redirect('/login');
+    });
 });
 
+//******** TODO: Insert code for login routes to render login page below ********//
+app.get('/login', (req, res) => {
+    res.render('login', {
+        messages: req.flash('success'), // Retrieve success messages from the session and pass them to the view
+        errors: req.flash('error') // Retrieve error messages from the session and pass them to the view
+    });
+});
+
+
+//******** TODO: Insert code for login routes for form submission below ********//
+//******* TO DO: Insert code for login routes for form submission below *******//
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+
+    // Validate email and password
+    if (!email || !password) {
+        req.flash('error', 'All fields are required.');
+        return res.redirect('/login');
+    }
+
+    const sql = 'SELECT * FROM users WHERE email = ? AND password = SHA1(?)';
+    db.query(sql, [email, password], (err, results) => {
+        if (err) {
+            throw err;
+        }
+        if (results.length > 0) {
+            // Successful login
+            req.session.user = results[0]; // store user in session
+            req.flash('success', 'Login successful');
+            // TO DO: Update to restrict the users to /dashboard
+            res.redirect('/dashboard');
+        } else {
+            // Invalid credentials
+            req.flash('error', 'Invalid email or password.');
+            res.redirect('/login');
+        }
+    });
+});
+
+//******** TODO: Insert code for dashboard route to render dashboard page for users. ********//
+app.get('/dashboard', checkAuthenticated, (req, res) => {
+    res.render('dashboard', { user: req.session.user });
+});
+
+//******** TODO: Insert code for admin route to render dashboard page for admin. ********//
+app.get('/admin', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('admin', { user: req.session.user });
+});
+
+//******** TODO: Insert code for logout route ********//
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.redirect('/welcome');
+    res.redirect('/');
 });
 
 // Your existing GPA routes
@@ -324,169 +294,6 @@ async function testDatabase() {
   });
 
 
-// Jenelle
-app.get('/', (req, res) => {
-  connection.query('SELECT * FROM modules', (err, modules) => {
-    if (err) return res.send('Error loading modules');
-
-    connection.query('SELECT * FROM components', (err2, components) => {
-      if (err2) return res.send('Error loading components');
-
-      res.render('index', { modules, components });
-    });
-  });
-});
-
-app.get('/moduleDetails', (req, res) => {
-  connection.query('SELECT * FROM modules', (err, modules) => {
-    if (err) return res.send('Error loading modules');
-
-    connection.query('SELECT * FROM components', (err2, components) => {
-      if (err2) return res.send('Error loading components');
-
-      res.render('moduleDetails', {
-        modules,
-        components
-      });
-    });
-  });
-});
-
-app.get('/moduleDetails/:id', (req, res) => {
-  const moduleId = req.params.id;
-  const sqlm = 'SELECT * FROM modules WHERE module_id = ?';
-  const sqlc = 'SELECT * FROM components WHERE module_id = ?';
-  connection.query(sqlm, [moduleId], (err, moduleResults) => {
-    if (err || moduleResults.length === 0) {
-      return res.status(404).send('Module not found');
-    }
-    connection.query(sqlc, [moduleId], (err2, componentResults) => {
-      if (err2) {
-        return res.status(500).send('Error loading components');
-      }
-
-      res.render('moduleDetails', {
-        modules: moduleResults[0], 
-        components: componentResults
-      });
-    });
-  });
-});
-
-app.get('/editCurrentModule/:id', (req, res) => {
-  const moduleId = req.params.id;
-  const sqlm = 'SELECT * FROM modules WHERE module_id = ?';
-  const sqlc = 'SELECT * FROM components WHERE module_id = ?';
-
-  connection.query(sqlm, [moduleId], (error, moduleResults) => {
-    if (error) {
-      console.error('Database query error:', error.message);
-      return res.status(500).send('Error retrieving module');
-    }
-    if (moduleResults.length === 0) {
-      return res.status(404).send('Module not found');
-    }
-    const module = moduleResults[0];
-
-    connection.query(sqlc, [moduleId], (error2, componentResults) => {
-      if (error2) {
-        console.error('Component query error:', error2.message);
-        return res.status(500).send('Error retrieving components');
-      }
-      res.render('editCurrentModule', {
-        modules: module,
-        components: componentResults
-      });
-    });
-  });
-});
-
-app.post('/editCurrentModule/:id', (req, res) => {
-  console.log(req.body);
-  const moduleId = req.params.id;
-  const { module_name, module_code, component_id, component_name, grade, weightage } = req.body;
-  const updateModuleSQL = 'UPDATE modules SET module_name = ?, module_code = ? WHERE module_id = ?';
-
-  connection.query(updateModuleSQL, [module_name, module_code, moduleId], (error) => {
-    if (error) {
-      console.error('Error updating module:', error.message);
-      return res.status(500).send('Error updating module: ' + error.message);
-    }
-
-    if (component_name && grade && weightage) {
-      if (component_id) {
-        const updateComponentSQL = 'UPDATE components SET component_name = ?, grade = ?, weightage = ? WHERE component_id = ? AND module_id = ?';
-        connection.query(updateComponentSQL, [component_name, grade, weightage, component_id, moduleId], (error2) => {
-          if (error2) {
-            console.error('Error updating component:', error2.message);
-            return res.status(500).send('Error updating component: ' + error2.message);
-          }
-          res.redirect('/editCurrentModule/' + moduleId);
-        });
-      } else {
-        const insertComponentSQL = 'INSERT INTO components (component_name, grade, weightage, module_id) VALUES (?, ?, ?, ?)';
-        connection.query(insertComponentSQL, [component_name, grade, weightage, moduleId], (error3) => {
-          if (error3) {
-            console.error('Error inserting component:', error3.message);
-            return res.status(500).send('Error adding component: ' + error3.message);
-          }
-          res.redirect('/editCurrentModule/' + moduleId);
-        });
-      }
-    } else {
-      res.redirect('/editCurrentModule/' + moduleId);
-    }
-  });
-});
-
-app.post('/updateModuleInfo/:id', (req, res) => {
-  const moduleId = req.params.id;
-  const { module_name, module_code } = req.body;
-
-  const sql = 'UPDATE modules SET module_name = ?, module_code = ? WHERE module_id = ?';
-  connection.query(sql, [module_name, module_code, moduleId], (err) => {
-    if (err) throw err;
-    res.redirect('/moduleDetails/' + moduleId);
-  });
-});
-
-
-app.get('/deleteComponent/:id', (req, res) => {
-  const componentId = req.params.id;
-  const moduleId = req.query.module_id;
-  const deleteQuery = 'DELETE FROM components WHERE id = ?';
-
-  connection.query(deleteQuery, [componentId], (error, results) => {
-    if (error) {
-      console.error("Error deleting component:", error);
-      res.status(500).send('Error deleting component');
-    } else {
-      res.redirect('/editCurrentModule/' + moduleId);
-    }
-  });
-});
-
-app.post('/editComponent', (req, res) => {
-  const componentId = parseInt(req.body.component_id);
-  const moduleId = parseInt(req.body.module_id);
-  const componentName = req.body.component_name;
-  const grade = req.body.grade;
-  const weightage = parseInt(req.body.weightage);
-
-  const sql = `UPDATE components 
-             SET component_name = ?, grade = ?, weightage = ? 
-             WHERE id = ? AND module_id = ?`;
-
-  connection.query(sql, [componentName, grade, weightage, componentId, moduleId], (error) => {
-    if (error) {
-      console.error('Error updating component:', error.message);
-      return res.status(500).send('Failed to update component');
-    }
-    res.redirect(`/editCurrentModule/${moduleId}`);
-  });
-});
-
-
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
@@ -496,129 +303,217 @@ app.listen(PORT, () => {
 // const mysql = require('mysql2/promise');
 // const session = require('express-session');
 // const flash = require('connect-flash');
-// require('dotenv').config(); // Add this line
+// const bcrypt = require('bcrypt');
+// require('dotenv').config();
 
 // const app = express();
 // const PORT = process.env.PORT || 3000;
 
-// // Database connection
-// // const db = mysql.createConnection({
-// //     // host: 'localhost',
-// //     // user: 'root',
-// //     // password: 'Mynameisjeff123!',
-// //     // database: 'c237_usersdb'
-// //     host: 'b-poe6.h.filess.io',
-// //     user: 'GPATracker_scienceegg',
-// //     password: '654f0adde2031c3b3a37a16b33f789327db4a9d0',
-// //     database: 'GPATracker_scienceegg'
-// // });
-
-// // Database connection - use environment variables
-// const dbConfig = {
+// const pool = mysql.createPool({
 //     host: process.env.DB_HOST || 'b-poe6.h.filess.io',
 //     user: process.env.DB_USER || 'GPATracker_scienceegg',
 //     password: process.env.DB_PASSWORD || '654f0adde2031c3b3a37a16b33f789327db4a9d0',
 //     database: process.env.DB_NAME || 'GPATracker_scienceegg',
 //     waitForConnections: true,
 //     connectionLimit: 10,
-//     queueLimit: 0
-// };
-
-// // db.connect((err) => {
-// //     if (err) {
-// //         throw err;
-// //     }
-// //     console.log('Connected to database');
-// // });
-
-// // app.use(express.urlencoded({ extended: false }));
-// // app.use(express.static('public'));
-
-// // // Session middleware
-// // app.use(session({
-// //     secret: 'secret',
-// //     resave: false,
-// //     saveUninitialized: true,
-// //     cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
-// // }));
-
-// // app.use(flash());
-
-// // // Setting up EJS
-// // app.set('view engine', 'ejs');
-
-// // // Middleware to check if user is logged in
-// // const checkAuthenticated = (req, res, next) => {
-// //     // Temporarily bypass authentication for testing
-// //     return next();
-    
-// //     // Actual implementation (commented out for now)
-// //     // if (req.session.user) {
-// //     //     return next();
-// //     // } else {
-// //     //     req.flash('error', 'Please log in to view this resource');
-// //     //     res.redirect('/login');
-// //     // }
-// // };
-
-// // // Routes
-// // app.get('/', checkAuthenticated, (req, res) => {
-// //     res.render('index', {
-// //         currentGPA: 0.00,
-// //         projectedGPA: 0.00
-// //     });
-// // });
-
-// // app.get('/addGPA', checkAuthenticated, (req, res) => {
-// //     res.send('Add GPA page will go here');
-// // });
-
-// // // Starting the server
-// // app.listen(3000, () => {
-// //     console.log('Server started on port 3000');
-// // });
-
-// const pool = mysql.createPool(dbConfig);
-
-// // Test database connection
-// pool.getConnection()
-//     .then(conn => {
-//         console.log('Connected to database');
-//         conn.release();
-//     })
-//     .catch(err => {
-//         console.error('Database connection failed:', err);
-//         process.exit(1); // Exit if DB connection fails
-//     });
+//     queueLimit: 0,
+//     connectTimeout: 10000,
+//     acquireTimeout: 10000
+// });
 
 // app.use(express.urlencoded({ extended: false }));
+// app.use(express.json());
 // app.use(express.static('public'));
-// app.use(express.json()); // Add JSON parsing middleware
-
-// // Session middleware - use environment variable for secret
 // app.use(session({
-//     secret: process.env.SESSION_SECRET || 'secret',
+//     secret: process.env.SESSION_SECRET || 'your-secret-key',
 //     resave: false,
-//     saveUninitialized: true,
-//     cookie: { 
+//     saveUninitialized: false,
+//     cookie: {
 //         maxAge: 1000 * 60 * 60 * 24 * 7,
-//         secure: process.env.NODE_ENV === 'production', // Enable in production
+//         secure: process.env.NODE_ENV === 'production',
 //         httpOnly: true
 //     }
 // }));
-
 // app.use(flash());
-
-// // Setting up EJS
 // app.set('view engine', 'ejs');
 
-// // Middleware to check if user is logged in
+// app.use((req, res, next) => {
+//     console.log('Session:', req.session);
+//     next();
+// });
+
 // const checkAuthenticated = (req, res, next) => {
-//     // Temporarily bypass authentication for testing
-//     return next();
+//     if (req.session.user) return next();
+//     req.flash('error', 'Please login to view this page');
+//     res.redirect('/login');
 // };
 
-// // Routes
+// // --- ROUTES ---
+
+// app.get('/', checkAuthenticated, (req, res) => {
+//     res.render('index', {
+//         currentGPA: 0.00,
+//         projectedGPA: 0.00
+//     });
+// });
+
+// app.get('/welcome', (req, res) => {
+//     if (req.session.user) return res.redirect('/');
+//     res.render('welcome');
+// });
+
+// app.get('/login', (req, res) => {
+//     if (req.session.user) return res.redirect('/');
+//     res.render('login', { error: req.flash('error') });
+// });
+
+// app.post('/login', async (req, res) => {
+//     let connection;
+//     try {
+//         const { email, password } = req.body;
+//         if (!email || !password) {
+//             req.flash('error', 'Email and password are required');
+//             return res.redirect('/login');
+//         }
+
+//         connection = await pool.getConnection();
+//         const [users] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
+
+//         if (users.length === 0 || !await bcrypt.compare(password, users[0].password)) {
+//             req.flash('error', 'Invalid credentials');
+//             return res.redirect('/login');
+//         }
+
+//         req.session.user = {
+//             id: users[0].id,
+//             username: users[0].username,
+//             email: users[0].email
+//         };
+
+//         req.session.save(err => {
+//             if (err) {
+//                 console.error('Session save error:', err);
+//                 req.flash('error', 'Login failed');
+//                 return res.redirect('/login');
+//             }
+//             return res.redirect('/');
+//         });
+
+//     } catch (err) {
+//         console.error('Login error:', err);
+//         req.flash('error', 'Login failed');
+//         return res.redirect('/login');
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// });
+
+// app.get('/register', (req, res) => {
+//     if (req.session.user) return res.redirect('/');
+//     res.render('register', { error: req.flash('error') });
+// });
+
+// // app.post('/register', async (req, res) => {
+// //     let connection;
+// //     try {
+// //         const { username, email, password } = req.body;
+
+// //         if (!username || !email || !password) {
+// //             req.flash('error', 'All fields are required');
+// //             return res.redirect('/register');
+// //         }
+
+// //         connection = await pool.getConnection();
+
+// //         const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+// //         if (existing.length > 0) {
+// //             req.flash('error', 'Email already registered');
+// //             return res.redirect('/register');
+// //         }
+
+// //         const hashedPassword = await bcrypt.hash(password, 10);
+
+// //         const [result] = await connection.query(
+// //             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
+// //             [username, email, hashedPassword]
+// //         );
+
+// //         if (result.affectedRows === 1) {
+// //             console.log('✅ New user inserted with ID:', result.insertId);
+// //             req.flash('success', 'Registration successful. Please login.');
+// //             return res.redirect('/login');
+// //         }
+
+// //         throw new Error('Registration failed');
+
+// //     } catch (err) {
+// //         console.error('Registration error:', err);
+// //         req.flash('error', 'Registration failed. Please try again.');
+// //         return res.redirect('/register');
+// //     } finally { 
+// //         if (connection) connection.release();
+// //     }
+// // });
+
+// app.post('/register', async (req, res) => {
+//     let connection;
+//     try {
+//         const { username, email, password } = req.body;
+//         console.log('[REGISTER] Received:', { username, email });
+
+//         if (!username || !email || !password) {
+//             console.log('[REGISTER] Missing fields');
+//             req.flash('error', 'All fields are required');
+//             return res.redirect('/register');
+//         }
+
+//         connection = await pool.getConnection();
+//         console.log('[REGISTER] Got DB connection');
+
+//         const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+//         console.log('[REGISTER] Existing users with email:', existing.length);
+
+//         if (existing.length > 0) {
+//             console.log('[REGISTER] Email already registered');
+//             req.flash('error', 'Email already registered');
+//             return res.redirect('/register');
+//         }
+
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         console.log('[REGISTER] Hashed password');
+
+//         const [result] = await connection.query(
+//             'INSERT INTO users (username, email, password, current_gpa, total_mc) VALUES (?, ?, ?, 0.00, 0)',
+//             [username, email, hashedPassword]
+//         );
+
+//         console.log('[REGISTER] Insert result:', result);
+
+//         if (result.affectedRows === 1) {
+//             console.log('[REGISTER] Success — New user ID:', result.insertId);
+//             req.flash('success', 'Registration successful. Please login.');
+//             return res.redirect('/login');
+//         }
+
+//         throw new Error('Insert failed — no rows affected');
+
+//     } catch (err) {
+//         console.error('[REGISTER] Error:', err.message);
+//         req.flash('error', 'Registration failed. Please try again.');
+//         return res.redirect('/register');
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// });
+
+
+
+// app.get('/logout', (req, res) => {
+//     req.session.destroy();
+//     res.redirect('/welcome');
+// });
+
+// // --- GPA ROUTES ---
 // app.get('/', checkAuthenticated, (req, res) => {
 //     res.render('index', {
 //         currentGPA: 0.00,
@@ -627,18 +522,99 @@ app.listen(PORT, () => {
 // });
 
 // app.get('/addGPA', checkAuthenticated, (req, res) => {
-//     res.send('Add GPA page will go here');
+//     res.render('addGPA');
 // });
 
-// // Error handling middleware
 // app.use((err, req, res, next) => {
 //     console.error(err.stack);
 //     res.status(500).send('Something broke!');
 // });
 
-// // Starting the server
-// app.listen(PORT, '0.0.0.0', () => {
-//     console.log(`Server started on port ${PORT}`);
+// async function testDatabase() {
+//     let connection;
+//     try {
+//         connection = await pool.getConnection();
+//         console.log('✅ Connected to database');
+
+//         const [tables] = await connection.query(`
+//             SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
+//             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'`,
+//             [process.env.DB_NAME || 'GPATracker_scienceegg']
+//         );
+
+//         if (tables.length === 0) {
+//             console.error('❌ Users table does not exist');
+//             return false;
+//         }
+
+//         console.log('✅ Users table exists');
+
+//         const [columns] = await connection.query(`
+//             SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+//             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'`,
+//             [process.env.DB_NAME || 'GPATracker_scienceegg']
+//         );
+
+//         const requiredColumns = [
+//             { name: 'id', type: 'int' },
+//             { name: 'username', type: 'varchar' },
+//             { name: 'email', type: 'varchar' },
+//             { name: 'password', type: 'varchar' },
+//             { name: 'current_gpa', type: 'decimal' },
+//             { name: 'total_mc', type: 'int' }
+//         ];
+
+//         let valid = true;
+//         for (let col of requiredColumns) {
+//             const exists = columns.some(c =>
+//                 c.COLUMN_NAME === col.name && c.DATA_TYPE.includes(col.type)
+//             );
+//             if (!exists) {
+//                 console.error(`❌ Missing/invalid column: ${col.name}`);
+//                 valid = false;
+//             }
+//         }
+
+//         if (!valid) return false;
+
+//         const [users] = await connection.query('SELECT COUNT(*) as count FROM users');
+//         console.log(`✅ Found ${users[0].count} users`);
+
+//         await connection.beginTransaction();
+//         try {
+//             const email = `test_${Date.now()}@test.com`;
+//             const [insert] = await connection.query(
+//                 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+//                 ['test_user', email, 'test_pass']
+//             );
+//             if (insert.affectedRows === 1) {
+//                 console.log('✅ Insert operation successful');
+//             }
+//         } finally {
+//             await connection.rollback();
+//             console.log('✅ Insert test rolled back');
+//         }
+
+//         console.log('✅ All database tests passed!');
+//         return true;
+
+//     } catch (err) {
+//         console.error('❌ Database test failed:', err.message);
+//         return false;
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// }
+
+// testDatabase().then(success => {
+//     if (!success) {
+//         console.error('⚠️ Fix database before continuing.');
+//         // process.exit(1); // Optionally exit on error
+//     }
 // });
 
-//test
+
+
+// app.listen(PORT, '0.0.0.0', () => {
+//     console.log(`🚀 Server started on port ${PORT}`);
+// });
