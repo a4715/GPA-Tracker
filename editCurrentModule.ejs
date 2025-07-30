@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Module</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #EDE7F6;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-sm" style="background-color: #3F51B5;">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="/">GPA Tracker</a>
+    </div>
+  </nav>
+
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Edit Current Module</h2>
+
+    <% if (modules) { %>
+    <form action="/editCurrentModule/<%= modules.module_id %>" method="POST">
+      <input type="hidden" id="module_id" name="module_id" value="<%= modules.module_id %>">
+
+      <input type="hidden" name="componentId" value="">
+
+      <div class="mb-3">
+        <label for="module_name" class="form-label">Module Name</label>
+        <input type="text" class="form-control" id="module_name" name="module_name" value="<%= modules.module_name %>" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="module_code" class="form-label">Module Code</label>
+        <input type="text" class="form-control" id="module_code" name="module_code" value="<%= modules.module_code %>" required>
+      </div>
+
+      <h5>Add New Component</h5>
+
+      <div class="mb-3">
+        <label for="component_name" class="form-label">Assessment</label>
+        <input type="text" class="form-control" id="component_name" name="component_name">
+      </div>
+
+      <div class="mb-3">
+        <label for="grade" class="form-label">Grade</label>
+        <input type="text" class="form-control" id="grade" name="grade">
+      </div>
+
+      <div class="mb-3">
+        <label for="weightage" class="form-label">Weightage (%)</label>
+        <input type="number" class="form-control" id="weightage" name="weightage" min="0" step="5">
+      </div>
+
+      <button type="submit" class="btn btn-success mb-3">Add Component</button>
+
+      <hr>
+      <h5>Current Components</h5>
+      <table class="table table-bordered mt-3">
+        <thead class="table-light">
+          <tr>
+            <th>Assessment</th>
+            <th>Grade</th>
+            <th>Weightage (%)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% let foundComponent = false; %>
+          <% for (let j = 0; j < components.length; j++) { %>
+            <% if (components[j].module_id == modules.module_id) { foundComponent = true; %>
+              <tr>
+                <form action="/editComponent" method="POST">
+                  <input type="hidden" name="component_id" value="<%= components[j].id %>">
+                  <input type="hidden" name="module_id" value="<%= modules.module_id %>">
+                  <td><input type="text" class="form-control" name="component_name" value="<%= components[j].component_name %>" required></td>
+                  <td><input type="text" class="form-control" name="grade" value="<%= components[j].grade %>" required></td>
+                  <td><input type="number" class="form-control" name="weightage" value="<%= components[j].weightage %>" min="0" step="5" required></td>
+                  <td class="d-flex gap-1">
+                    <button type="submit" class="btn btn-sm btn-warning">Save</button>
+                    <a href="/deleteComponent/<%= components[j].id %>?module_id=<%= modules.module_id %>" 
+                      onclick="return confirm('Are you sure?');" 
+                      class="btn btn-sm btn-danger">
+                      Delete
+                    </a>
+                  </td>
+                </form>
+              </tr>
+            <% } %>
+          <% } %>
+
+          <% if (!foundComponent) { %>
+            <tr>
+              <td colspan="4" class="text-center">No components found for this module.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+
+      <div class="d-grid gap-2 mt-3">
+        <a href="/moduleDetails/<%= modules.module_id %>" class="btn btn-secondary">Back to Module Details</a>
+      </div>
+      
+    </form>
+    <% } else { %>
+      <p class="text-center">No module found.</p>
+    <% } %>
+  </div>
+</body>
+</html>
